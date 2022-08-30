@@ -72,8 +72,34 @@ example(of: "Just") {
         receiveValue: {
           print("Received value (another)", $0)
       })
-
 }
+
+//1. Define a class with a property that has a didSet property observer that prints the new value.
+//2. Create an instance of that class.
+//3. Create a publisher from an array of strings.
+//4. Subscribe to the publisher, assigning each value received to the value property of the object.
+
+example(of: "assign(to:on:)") {
+  // 1
+  class SomeObject {
+    var value: String = "" {
+      didSet {
+        print(value)
+      }
+    }
+  }
+  
+  // 2
+  let object = SomeObject()
+  
+  // 3
+  let publisher = ["Hello", "world!"].publisher
+  
+  // 4
+  _ = publisher
+    .assign(to: \.value, on: object)
+}
+
     
 
 
