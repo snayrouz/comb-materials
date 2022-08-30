@@ -100,8 +100,64 @@ example(of: "assign(to:on:)") {
     .assign(to: \.value, on: object)
 }
 
+example(of: "assign(to:)") {
+    // 1
+    class SomeObject {
+        @Published var value = 0
+    }
     
+    let object = SomeObject()
+    
+    // 2
+    object.$value.sink {
+        print($0)
+    }
+    
+    // 3
+    (0..<10).publisher.assign(to: &object.$value)
+}
 
+//  Subscriptions return an instance of AnyCancellable as a “cancellation token,” which makes it possible to cancel the subscription when you’re done with it. AnyCancellable conforms to the Cancellable protocol, which requires the cancel() method exactly for that purpose.
+
+//What you do here is:
+//
+//1. Create a publisher of integers via the range’s publisher property.
+//2. Define a custom subscriber, IntSubscriber.
+//3. Implement the type aliases to specify that this subscriber can receive integer inputs and will never receive errors.
+//4. Implement the required methods, beginning with receive(subscription:), called by the publisher; and in that method, call .request(_:) on the subscription specifying that the subscriber is willing to receive up to three values upon subscription.
+//5. Print each value as it’s received and return .none, indicating that the subscriber will not adjust its demand; .none is equivalent to .max(0).
+//6. Print the completion event.
+    
+example(of: "Custom Subscriber") {
+    // 1
+    let publisher = (1...6).publisher
+    // 2
+    final class IntSubscriber: Subscriber {
+        // 3
+        typealias Input = Int
+        typealias Failure = Never
+        
+        // 4
+        func receive(subscription: Subscription) {
+            subscription.request(.max(3))
+        }
+        
+        // 5
+        func receive(_ input: Int) -> Subscribers.Demand {
+            print("Received value", input)
+            return .none
+        }
+        
+        // 6
+        func receive(completion: Subscribers.Completion<Never>) {
+            print("Received completion", completion)
+        }
+    }
+    
+    let subscriber = IntSubscriber()
+    
+    publisher.subscribe(subscriber)
+}
 
 
 
