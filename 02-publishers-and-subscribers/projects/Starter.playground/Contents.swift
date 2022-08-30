@@ -190,6 +190,106 @@ example(of: "Future") {
 */
 
 
+// 1. Define a custom error type.
+// 2. Define a custom subscriber that receives strings and MyError errors.
+// 3. Adjust the demand based on the received value.
+// 4. Create an instance of the custom subscriber.
+// 5. Creates an instance of a PassthroughSubject of type String and the custom error type you defined.
+// 6. Subscribes the subscriber to the subject.
+// 7. Creates another subscription using sink.
+// extra note: Returning .max(1) in receive(_:) when the input is "World" results in the new max being set to 3 (the original max plus 1).
+
+example(of: "PassthroughSubject") {
+  // 1
+  enum MyError: Error {
+    case test
+  }
+  
+  // 2
+  final class StringSubscriber: Subscriber {
+    typealias Input = String
+    typealias Failure = MyError
+    
+    func receive(subscription: Subscription) {
+      subscription.request(.max(2))
+    }
+    
+    func receive(_ input: String) -> Subscribers.Demand {
+      print("Received value", input)
+      // 3
+      return input == "World" ? .max(1) : .none
+    }
+    
+    func receive(completion: Subscribers.Completion<MyError>) {
+      print("Received completion", completion)
+    }
+  }
+  
+  // 4
+    let subscriber = StringSubscriber()
+
+    // 5
+    let subject = PassthroughSubject<String, MyError>()
+
+    // 6
+    subject.subscribe(subscriber)
+
+    // 7
+    let subscription = subject
+      .sink(
+        receiveCompletion: { completion in
+          print("Received completion (sink)", completion)
+        },
+        receiveValue: { value in
+          print("Received value (sink)", value)
+        }
+      )
+    
+    subject.send("Hello")
+    subject.send("World!")
+    // 8
+    subscription.cancel()
+    // 9
+    subject.send("Still there?")
+    subject.send(completion: .finished)
+    subject.send("How about another one?")
+}
+
+/*
+ 1. Create a subscriptions set.
+ 2. Create a CurrentValueSubject of type Int and Never. This will publish integers and never publish an error, with an initial value of 0.
+ 3. Create a subscription to the subject and print values received from it.
+ 4. Store the subscription in the subscriptions set (passed as an inout parameter instead of a copy).
+ */
+
+example(of: "CurrentValueSubject") {
+  // 1
+  var subscriptions = Set<AnyCancellable>()
+  
+  // 2
+  let subject = CurrentValueSubject<Int, Never>(0)
+  
+  // 3
+  subject
+    .print()
+    .sink(receiveValue: { print($0) })
+    .store(in: &subscriptions)
+    
+    subject.send(1)
+    subject.send(2)
+    
+    print(subject.value)
+    
+    subject.value = 3
+    print(subject.value)
+    
+    subject
+        .print()
+        .sink(receiveValue: { print("Second subscription:", $0) })
+        .store(in: &subscriptions)
+}
+
+
 
 
 /// Copyright (c) 2021 Razeware LLC
