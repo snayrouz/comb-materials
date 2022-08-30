@@ -161,7 +161,7 @@ example(of: "Custom Subscriber") {
 
 //A Future is a publisher that will eventually produce a single value and finish, or it will fail. It does this by invoking a closure when a value or error is available, and that closure is, in fact, the promise.
 
-
+/*
 example(of: "Future") {
   func futureIncrement(
     integer: Int,
@@ -187,7 +187,7 @@ example(of: "Future") {
           receiveValue: { print("Second", $0) })
     .store(in: &subscriptions)
 }
-
+*/
 
 
 
