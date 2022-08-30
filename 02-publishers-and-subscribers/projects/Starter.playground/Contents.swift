@@ -145,7 +145,7 @@ example(of: "Custom Subscriber") {
         // 5
         func receive(_ input: Int) -> Subscribers.Demand {
             print("Received value", input)
-            return .unlimited
+            return .none
         }
         
         // 6
@@ -158,6 +158,37 @@ example(of: "Custom Subscriber") {
     
     publisher.subscribe(subscriber)
 }
+
+//A Future is a publisher that will eventually produce a single value and finish, or it will fail. It does this by invoking a closure when a value or error is available, and that closure is, in fact, the promise.
+
+
+example(of: "Future") {
+  func futureIncrement(
+    integer: Int,
+    afterDelay delay: TimeInterval) -> Future<Int, Never> {
+      Future<Int, Never> { promise in
+        print("Original")
+        DispatchQueue.global().asyncAfter(deadline: .now() + delay) {
+          promise(.success(integer + 1))
+        }
+      }
+  }
+  
+  // 1
+  let future = futureIncrement(integer: 1, afterDelay: 3)
+  // 2
+  future
+    .sink(receiveCompletion: { print($0) },
+          receiveValue: { print($0) })
+    .store(in: &subscriptions)
+  
+  future
+    .sink(receiveCompletion: { print("Second", $0) },
+          receiveValue: { print("Second", $0) })
+    .store(in: &subscriptions)
+}
+
+
 
 
 
