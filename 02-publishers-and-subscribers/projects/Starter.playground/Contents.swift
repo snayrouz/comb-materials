@@ -5,13 +5,69 @@ import CoreFoundation
 
 var subscriptions = Set<AnyCancellable>()
 
+//A publisher emits two kinds of events:
+//1. Values, also referred to as elements.
+//2. A completion event.
+//A publisher can emit zero or more values but only one completion event, which can either be a normal completion event or an error. Once a publisher emits a completion event, it’s finished and can no longer emit any more events.
+
 example(of: "Publisher"){
     // 1
     let myNotification = Notification.Name("MyNotification")
     
     // 2
     let publisher = NotificationCenter.default.publisher(for: myNotification, object: nil)
+    
+    // 3
+    let center = NotificationCenter.default
+
+    // 4
+    let observer = center.addObserver(
+      forName: myNotification,
+      object: nil,
+      queue: nil) { notification in
+        print("Notification received!")
+    }
+
+    // 5
+    center.post(name: myNotification, object: nil)
+
+    // 6
+    center.removeObserver(observer)
 }
+
+example(of: "Subscriber") {
+    let myNotification = Notification.Name("MyNotification")
+    let center = NotificationCenter.default
+    
+    let publisher = center.publisher(for: myNotification, object: nil)
+    
+    // 1
+    let subscription = publisher.sink { _ in
+        print("Notification received from publisher!")
+    }
+    
+    // 2
+    center.post(name: myNotification, object: nil)
+    
+    // 3
+    subscription.cancel()
+}
+
+example(of: "Just") {
+    // 1
+    let just = Just("Hello world!")
+    
+    // 2
+    _ = just.sink(receiveCompletion: {
+        print("Received completion", $0)
+    }, receiveValue: {
+        print("Received value", $0)
+    })
+}
+    
+
+
+
 
 /// Copyright (c) 2021 Razeware LLC
 ///
