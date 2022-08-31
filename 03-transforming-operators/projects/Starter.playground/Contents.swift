@@ -98,32 +98,45 @@ example(of: "tryMap") {
  4.  Type erase the publisher to match the return type for the fuction.
  */
 
-example(of: "flatMap") {
-  // 1
-  func decode(_ codes: [Int]) -> AnyPublisher<String, Never> {
-    // 2
-    Just(
-      codes
-        .compactMap { code in
-          guard (32...255).contains(code) else { return nil }
-          return String(UnicodeScalar(code) ?? " ")
-        }
-        // 3
-        .joined()
-    )
-    // 4
-    .eraseToAnyPublisher()
-  }
-  
-  // 5
-  [72, 101, 108, 108, 111, 44, 32, 87, 111, 114, 108, 100, 33]
-    .publisher
-    .collect()
-    // 6
-    .flatMap(decode)
-    // 7
-    .sink(receiveValue: { print($0) })
-    .store(in: &subscriptions)
+//example(of: "flatMap") {
+//  // 1
+//  func decode(_ codes: [Int]) -> AnyPublisher<String, Never> {
+//    // 2
+//    Just(
+//      codes
+//        .compactMap { code in
+//          guard (32...255).contains(code) else { return nil }
+//          return String(UnicodeScalar(code) ?? " ")
+//        }
+//        // 3
+//        .joined()
+//    )
+//    // 4
+//    .eraseToAnyPublisher()
+//  }
+//  
+//  // 5
+//  [72, 101, 108, 108, 111, 44, 32, 87, 111, 114, 108, 100, 33]
+//    .publisher
+//    .collect()
+//    // 6
+//    .flatMap(decode)
+//    // 7
+//    .sink(receiveValue: { print($0) })
+//    .store(in: &subscriptions)
+//}
+
+/*
+ replaceNil(with:)
+ */
+
+example(of: "replaceNil") {
+    // 1
+    ["A", nil, "C"].publisher
+        .eraseToAnyPublisher()
+        .replaceNil(with: "-") // 2
+        .sink(receiveValue: { print($0) }) //3
+        .store(in: &subscriptions)
 }
 
 /// Copyright (c) 2021 Razeware LLC
