@@ -83,6 +83,48 @@ example(of: "tryMap") {
         .store(in: &subscriptions)
 }
 
+/*
+ flatMap
+ 
+ The flatMap operator flattens multiple upstream publishers into a single downstream publisher — or more specifically, flatten the emissions from those publishers.
+
+ The publisher returned by flatMap does not — and often will not — be of the same type as the upstream publishers it receives.
+
+ A common use case for flatMap in Combine is when you want to pass elements emitted by one publisher to a method that itself returns a publisher, and ultimately subscribe to the elements emitted by that second publisher.
+ 
+ 1. Define a function that takes an array of integers, each representing an ASCII code, and returns a type-erased publisher of strings that never emits errors.
+ 2. Create a Just publisher that converts the character code into a string if it’s within the range of 0.255, which includes standard and extended printable ASCII characters.
+ 3. Join the strings together.
+ 4.  Type erase the publisher to match the return type for the fuction.
+ */
+
+example(of: "flatMap") {
+  // 1
+  func decode(_ codes: [Int]) -> AnyPublisher<String, Never> {
+    // 2
+    Just(
+      codes
+        .compactMap { code in
+          guard (32...255).contains(code) else { return nil }
+          return String(UnicodeScalar(code) ?? " ")
+        }
+        // 3
+        .joined()
+    )
+    // 4
+    .eraseToAnyPublisher()
+  }
+  
+  // 5
+  [72, 101, 108, 108, 111, 44, 32, 87, 111, 114, 108, 100, 33]
+    .publisher
+    .collect()
+    // 6
+    .flatMap(decode)
+    // 7
+    .sink(receiveValue: { print($0) })
+    .store(in: &subscriptions)
+}
 
 /// Copyright (c) 2021 Razeware LLC
 ///
