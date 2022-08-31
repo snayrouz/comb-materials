@@ -340,6 +340,45 @@ example(of: "Dynamically adjusting Demand") {
     subject.send(6)
 }
 
+/*
+ 1. Create a passthrough subject.
+ 2. Create a type-erased publisher from that subject.
+ 3. Subscribe to the type-erased publisher.
+ 4. Send a new value through the passthrough subject.
+ */
+
+example(of: "Type erasure") {
+  // 1
+  let subject = PassthroughSubject<Int, Never>()
+  
+  // 2
+  let publisher = subject.eraseToAnyPublisher()
+  
+  // 3
+  publisher
+    .sink(receiveValue: { print($0) })
+    .store(in: &subscriptions)
+  
+  // 4
+  subject.send(0)
+}
+
+example(of: "async/await") {
+  let subject = CurrentValueSubject<Int, Never>(0)
+    Task {
+      for await element in subject.values {
+        print("Element: \(element)")
+      }
+      print("Completed.")
+    }
+    
+    subject.send(1)
+    subject.send(2)
+    subject.send(3)
+
+    subject.send(completion: .finished)
+}
+
 
 
 
