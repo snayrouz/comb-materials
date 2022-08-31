@@ -3,12 +3,84 @@ import Combine
 
 var subscriptions = Set<AnyCancellable>()
 
+/*
+ COLLECT
+ Be careful when working with collect() and other buffering operators that do not require specifying a count or limit. They will use an unbounded amount of memory to store received values as they won’t emit before the upstream finishes.
+ */
+
 example(of: "collect") {
   ["A", "B", "C", "D", "E"].publisher
         .collect()
     .sink(receiveCompletion: { print($0) },
           receiveValue: { print($0) })
     .store(in: &subscriptions)
+}
+
+/*
+ MAP
+ Works just like Swift’s standard map, except that it operates on values emitted from a publisher.
+ 
+ 1. Create a number formatter to spell out each number.
+ 2. Create a publisher of integers.
+3.  Use map, passing a closure that gets upstream values and returns the result of using the formatter to return the number’s spelled out string.
+ */
+
+example(of: "map") {
+    // 1
+    let formatter = NumberFormatter()
+    formatter.numberStyle = .spellOut
+    
+    // 2
+    [123, 4, 56].publisher
+    // 3
+        .map {
+            formatter.string(for: NSNumber(integerLiteral: $0)) ?? ""
+        }
+        .sink(receiveValue: { print($0) })
+        .store(in: &subscriptions)
+    
+}
+
+/*
+ MAPPING KEY PATHS
+ 
+    1. Create a publisher of Coordinates that will never emit an error.
+    2. Begin a subscription to the publisher.
+    3. Map into the x and y properties of Coordinate using their key paths.
+    4. Print a statement that indicates the quadrant of the provide x and y values.
+    5. Send some coordinates through the publisher.
+ */
+example(of: "Mapping key paths") {
+    // 1
+    let publisher = PassthroughSubject<Coordinate, Never>()
+    // 2
+    publisher
+    // 3
+        .map(\.x, \.y)
+        .sink(receiveValue: { x, y in
+            // 4
+            print(
+            "The coordinate at (\(x), \(y)) is in quadrant", quadrantOf(x: x, y: y)
+            )
+        })
+        .store(in: &subscriptions)
+    // 5
+    publisher.send(Coordinate(x: 10, y: -8))
+    publisher.send(Coordinate(x: 0, y: -5))
+}
+
+/*
+ tryMap(_:)
+ Several operators, including map, have a counterpart with a try prefix that takes a throwing closure. If you throw an error, the operator will emit that error downstream.
+ */
+example(of: "tryMap") {
+    // 1
+    Just("Directory name that does not exist")
+    // 2
+        .tryMap { try FileManager.default.contentsOfDirectory(atPath: $0)}
+    // 3
+        .sink(receiveCompletion: { print($0)}, receiveValue: { print($0) })
+        .store(in: &subscriptions)
 }
 
 
